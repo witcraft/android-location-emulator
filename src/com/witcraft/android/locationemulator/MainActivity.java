@@ -1,16 +1,15 @@
 package com.witcraft.android.locationemulator;
 
-import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Canvas;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.view.MotionEvent;
 import android.widget.CompoundButton;
 import android.widget.Toast;
 import android.widget.ToggleButton;
-import com.google.android.maps.MapActivity;
-import com.google.android.maps.MapController;
-import com.google.android.maps.MapView;
+import com.google.android.maps.*;
 
 public class MainActivity extends MapActivity {
     private static final String TAG = "MainActivity";
@@ -69,5 +68,94 @@ public class MainActivity extends MapActivity {
 
         }
     }
+
+//    private class OnMoveOverlay extends Overlay {
+//        private GeoPoint location = new GeoPoint(0, 0);
+//        private GeoPoint currentLocation;
+//
+//        protected boolean isMapMoving = false;
+//
+//        public OnMoveOverlay() {
+//            super();
+//        }
+//
+//        @Override
+//        public boolean onTouchEvent(MotionEvent motionEvent, com.google.android.maps.MapView mapView) {
+//
+//            if (motionEvent.getActionMasked() == MotionEvent.ACTION_UP) {
+//                // Added to example to make more complete
+//                isMapMoving = true;
+//            }
+//
+//            return false;
+//        }
+//
+//        @Override
+//        public boolean draw(Canvas canvas, com.google.android.maps.MapView mapView, boolean shadow, long l) {
+//            if (!shadow) {
+//                if (isMapMoving) {
+//
+//
+//                    currentLocation = mapView.getMapCenter();
+//                    if (currentLocation.equals(location)) {
+//                        isMapMoving = false;
+//
+//                        locationBtn.setChecked(false);
+//
+//                        new GeocodeFromLocationTask(currentLocation).execute();
+//                    } else {
+//                        location = currentLocation;
+//                    }
+//                }
+//            }
+//
+//            return super.draw(canvas, mapView, shadow, l);
+//        }
+//    }
+
+    private class OnMoveOverlay extends Overlay
+    {
+
+        private  GeoPoint lastLatLng = new GeoPoint(0, 0);
+        private  GeoPoint currentLatLng;
+
+        protected boolean isMapMoving = false;
+
+        @Override
+        public boolean onTouchEvent(MotionEvent motionEvent, MapView mapView) {
+            super.onTouchEvent(motionEvent, mapView);
+
+            if (motionEvent.getAction() == MotionEvent.ACTION_UP)
+            {
+                // Added to example to make more complete
+                isMapMoving = true;
+            }
+
+            return false;
+        }
+
+
+        @Override
+        public void draw(Canvas canvas, MapView mapView, boolean shadow)
+        {
+            if (!shadow)
+            {
+                if (isMapMoving)
+                {
+                    currentLatLng = mapView.getProjection().fromPixels(0, 0);
+                    if (currentLatLng.equals(lastLatLng))
+                    {
+                        isMapMoving = false;
+                        eventListener.mapMovingFinishedEvent();
+                    }
+                    else
+                    {
+                        lastLatLng = currentLatLng;
+                    }
+                }
+            }
+        }
+    }
+
 }
 
