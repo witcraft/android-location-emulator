@@ -15,6 +15,8 @@ import android.util.Log;
 import android.widget.Toast;
 import com.google.android.maps.GeoPoint;
 
+import java.util.ArrayList;
+
 public class MockService extends Service {
     private NotificationManager mNM;
 
@@ -23,7 +25,8 @@ public class MockService extends Service {
     private Handler handler;
     private LocationManager locationManager;
     private boolean serviceEnabled;
-    private Location mockLocation;
+    private ArrayList<Location> mockLocationList;
+    private int pointer = 0;
 
     public class LocalBinder extends Binder {
         MockService getService() {
@@ -34,24 +37,34 @@ public class MockService extends Service {
     private Runnable setLocationWorker = new Runnable() {
         @Override
         public void run() {
-            locationManager.setTestProviderLocation(LocationManager.GPS_PROVIDER, mockLocation);
-
             if (serviceEnabled) {
                 handler.postDelayed(this, 5000);
             }
-            
-            Log.d(TAG, "Service Iteration");
+
+            if (!mockLocationList.isEmpty()) {
+                Location currentLocation = mockLocationList.get(pointer);
+                currentLocation.setTime(System.currentTimeMillis());
+
+                locationManager.setTestProviderLocation(LocationManager.GPS_PROVIDER, mockLocationList.get(pointer));
+
+                if (pointer < (mockLocationList.size() - 1)) {
+                    pointer++;
+                } else {
+                    pointer = 0;
+                }
+            }
         }
     };
     
     @Override
     public void onCreate() {
+        mockLocationList = new ArrayList<Location>();
         mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 
         showNotification();
 
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        locationManager.addTestProvider(LocationManager.GPS_PROVIDER, false, false, false, false, true, true, true, 0, 5);
+        locationManager.addTestProvider(LocationManager.GPS_PROVIDER, false, false, false, false, false, false, false, 1, 1);
 
         handler = new Handler();
     }
@@ -60,11 +73,11 @@ public class MockService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         serviceEnabled = true;
 
-        mockLocation = intent.getParcelableExtra("location");
+        mockLocationList.add((Location) intent.getParcelableExtra("location"));
 
         Log.i("LocalService", "Received start id " + startId + ": " + intent);
 
-        locationManager.setTestProviderEnabled(LocationManager.GPS_PROVIDER, serviceEnabled);
+        locationManager.setTestProviderEnabled(LocationManager.GPS_PROVIDER, true);
         handler.post(setLocationWorker);
 
         return START_STICKY;
@@ -87,7 +100,11 @@ public class MockService extends Service {
     private final IBinder mBinder = new LocalBinder();
 
     public void setNewMockLocation(Location location) {
-        mockLocation = location;
+        mockLocationList.add(location);
+    }
+
+    public void clearList() {
+        mockLocationList.clear();
     }
 
     private void showNotification() {

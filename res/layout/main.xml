@@ -10,7 +10,8 @@
                                      android:clickable="true"
                                      android:apiKey="@string/google_maps_api_key"/>
 
-    <ImageView android:layout_width="wrap_content"
+    <ImageView android:id="@+id/pointer"
+               android:layout_width="wrap_content"
                android:layout_height="wrap_content"
                android:src="@drawable/location"
                android:layout_centerInParent="true"/>
@@ -20,16 +21,19 @@
                   android:layout_width="fill_parent"
                   android:layout_alignParentTop="true">
 
-        <ToggleButton android:id="@+id/toggle_emulation_btn"
-                      android:layout_width="wrap_content"
-                      android:layout_height="wrap_content"
-                      android:textOn="Off"
-                      android:textOff="On"/>
+        <EditText android:id="@+id/accuracy"
+                  android:layout_width="70dp"
+                  android:layout_height="wrap_content"
+                  android:layout_margin="7dp"
+                  android:text="10"
+                  android:hint="Acc"
+                  android:numeric="decimal"/>
 
         <EditText android:id="@+id/speed"
                   android:layout_width="70dp"
                   android:layout_height="wrap_content"
                   android:layout_margin="7dp"
+                  android:text="20"
                   android:hint="Km/H"
                   android:numeric="decimal"/>
 
@@ -37,6 +41,7 @@
                   android:layout_width="70dp"
                   android:layout_height="wrap_content"
                   android:layout_margin="7dp"
+                  android:text="0"
                   android:hint="Degr"
                   android:numeric="decimal"/>
 
@@ -45,8 +50,17 @@
                 android:layout_width="fill_parent"
                 android:layout_margin="7dp"
                 android:onClick="apply"
-                android:text="Apply"/>
+                android:text="Add"/>
 
     </LinearLayout>
+
+    <Button android:id="@+id/drop"
+            android:layout_height="wrap_content"
+            android:layout_width="fill_parent"
+            android:layout_margin="7dp"
+            android:layout_alignParentBottom="true"
+            android:onClick="clear"
+            android:text="Clear"/>
+
 </RelativeLayout>
 

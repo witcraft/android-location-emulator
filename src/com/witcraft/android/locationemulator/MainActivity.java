@@ -1,5 +1,6 @@
 package com.witcraft.android.locationemulator;
 
+import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -9,8 +10,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.Settings;
 import android.util.Log;
-import android.view.KeyEvent;
-import android.view.View;
+import android.view.*;
 import android.view.inputmethod.EditorInfo;
 import android.widget.*;
 import com.google.android.maps.*;
@@ -23,12 +23,13 @@ public class MainActivity extends MapActivity {
     private static final String ACTION_APPLICATION_DEVELOPMENT_SETTINGS = "com.android.settings.APPLICATION_DEVELOPMENT_SETTINGS";
     private MapView mapView;
     private MapController mapController;
-    //    private LocationManager locationManager;
-    private ToggleButton toggleEmulationBtn;
     private boolean mIsBound;
     private MockService mBoundService;
+    private EditText accuracyText;
     private EditText speedText;
     private EditText headingText;
+    private ImageView pointer;
+    private boolean headingMode;
 
     private ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder service) {
@@ -45,27 +46,6 @@ public class MainActivity extends MapActivity {
         }
     };
 
-    private CompoundButton.OnCheckedChangeListener onToggleEmulationBtnCheckedChanged = new CompoundButton.OnCheckedChangeListener() {
-        @Override
-        public void onCheckedChanged(CompoundButton compoundButton, boolean cheked) {
-            if (cheked) {
-                Log.d(TAG, "Service starting...");
-
-                Intent service = new Intent(MainActivity.this, MockService.class);
-                service.putExtra("location", LocationExtensions.fromGeoPoint(mapView.getMapCenter()));
-                startService(service);
-
-                doBindService();
-            } else {
-                Log.d(TAG, "Service stopping...");
-
-                doUnbindService();
-
-                stopService(new Intent(MainActivity.this, MockService.class));
-            }
-        }
-    };
-
     private OnDragEndListener onMapViewDragEnd = new OnDragEndListener() {
         @Override
         public void onDragEnd(MapView mapView, GeoPoint center) {
@@ -77,9 +57,19 @@ public class MainActivity extends MapActivity {
         }
     };
 
+    private LocationEmulatorApplication getApp() {
+        return (LocationEmulatorApplication) getApplication();
+    }
+
     private Location getCurrentLocation() {
         Location mockLocation = LocationExtensions.fromGeoPoint(mapView.getMapCenter());
         mockLocation.setAccuracy(10);
+
+        try {
+            mockLocation.setAccuracy((float) Integer.parseInt(accuracyText.getText().toString()));
+        } catch (NumberFormatException e) {
+            mockLocation.setAccuracy(10);
+        }
 
         try {
             mockLocation.setSpeed((float) speedFromKMH(Integer.parseInt(speedText.getText().toString())));
@@ -90,16 +80,28 @@ public class MainActivity extends MapActivity {
         try {
             mockLocation.setBearing((float) Integer.parseInt(headingText.getText().toString()));
         } catch (NumberFormatException e) {
-            //  Do nothing
+            mockLocation.setBearing(0);
         }
 
         return mockLocation;
     }
 
     public void apply(View view) {
-        Location mockLocation = getCurrentLocation();
+        if (getApp().isServiceEnabled()) {
+            Location mockLocation = getCurrentLocation();
 
-        mBoundService.setNewMockLocation(mockLocation);
+            if (mBoundService != null) {
+                mBoundService.setNewMockLocation(mockLocation);
+            }
+        } else {
+            Toast.makeText(this, "Enable service first", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    public void clear(View view) {
+        if (mBoundService != null) {
+            mBoundService.clearList();
+        }
     }
     
     public void onCreate(Bundle savedInstanceState) {
@@ -112,10 +114,46 @@ public class MainActivity extends MapActivity {
         this.mapController = mapView.getController();
 
         mapController.setZoom(12);
+        mapView.setBuiltInZoomControls(true);
 
-        this.toggleEmulationBtn = (ToggleButton) findViewById(R.id.toggle_emulation_btn);
-        this.toggleEmulationBtn.setOnCheckedChangeListener(onToggleEmulationBtnCheckedChanged);
+        pointer = (ImageView) findViewById(R.id.pointer);
+        pointer.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                Log.d(TAG, "Long click happened");
+                headingMode = true;
 
+                Log.d(TAG, "" + (view.getRight() + view.getLeft()) / 2 + " - " + (view.getTop() + view.getBottom()) / 2);
+
+                return false;
+            }
+        });
+
+        pointer.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                if (motionEvent.getActionMasked() == MotionEvent.ACTION_UP) {
+                    headingMode = false;
+                }
+
+                if (headingMode) {
+                    double xCenter = (view.getRight() + view.getLeft()) / 2;
+                    double yCenter = (view.getTop() + view.getBottom()) / 2;
+                    double x1End = 0;
+                    double y1End = -100;
+                    double x2End = view.getLeft() + motionEvent.getX() - xCenter;
+                    double y2End = view.getTop() + motionEvent.getY() - yCenter;
+
+                    Log.d(TAG, "" + x2End + " - " + y2End);
+
+//                    double cos = () / ();
+                }
+
+                return false;
+            }
+        });
+
+        accuracyText = (EditText) findViewById(R.id.accuracy);
         speedText = (EditText) findViewById(R.id.speed);
         headingText = (EditText) findViewById(R.id.heading);
     }
@@ -126,7 +164,7 @@ public class MainActivity extends MapActivity {
 
         checkMockSettings();
 
-        if (toggleEmulationBtn.isChecked()) {
+        if (getApp().isServiceEnabled()) {
             doBindService();
         }
     }
@@ -136,6 +174,46 @@ public class MainActivity extends MapActivity {
         super.onPause();
 
         doUnbindService();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.enable:
+                if (!getApp().isServiceEnabled()) {
+                    Log.d(TAG, "Service starting...");
+
+                    Intent service = new Intent(MainActivity.this, MockService.class);
+                    service.putExtra("location", getCurrentLocation());
+                    startService(service);
+
+                    doBindService();
+
+                    getApp().setServiceEnabled(true);
+                }
+                return true;
+            case R.id.disable:
+                if (getApp().isServiceEnabled()) {
+                    Log.d(TAG, "Service stopping...");
+
+                    doUnbindService();
+
+                    stopService(new Intent(MainActivity.this, MockService.class));
+
+                    getApp().setServiceEnabled(false);
+                }
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+
     }
 
     @Override
