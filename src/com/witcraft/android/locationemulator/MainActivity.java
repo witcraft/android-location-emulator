@@ -2,14 +2,19 @@ package com.witcraft.android.locationemulator;
 
 import android.content.Intent;
 import android.graphics.Canvas;
+import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.widget.CompoundButton;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 import com.google.android.maps.*;
+import com.witcraft.android.locationemulator.lib.LocationExtensions;
+import com.witcraft.android.locationemulator.lib.OnDragEndListener;
+import com.witcraft.android.locationemulator.lib.OnDragOverlay;
 
 public class MainActivity extends MapActivity {
     private static final String TAG = "MainActivity";
@@ -26,6 +31,18 @@ public class MainActivity extends MapActivity {
         }
     };
 
+    private OnDragEndListener onMapViewDragEnd = new OnDragEndListener() {
+        @Override
+        public void onDragEnd(MapView mapView, GeoPoint center) {
+
+            Location loc = LocationExtensions.fromGeoPoint(center);
+
+            locationManager.setTestProviderLocation(LocationManager.GPS_PROVIDER, loc);
+            
+            Log.d(TAG, "Mock location set");
+        }
+    };
+
     /**
      * Called when the activity is first created.
      */
@@ -35,11 +52,14 @@ public class MainActivity extends MapActivity {
         setContentView(R.layout.main);
 
         this.mapView = (MapView) findViewById(R.id.map_view);
+        this.mapView.getOverlays().add(new OnDragOverlay(onMapViewDragEnd));
+
         this.mapController = mapView.getController();
 
         mapController.setZoom(12);
 
         this.locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        this.locationManager.addTestProvider(LocationManager.GPS_PROVIDER, false, false, false, false, true, true, true, 0, 5);
 
         this.toggleEmulationBtn = (ToggleButton) findViewById(R.id.toggle_emulation_btn);
         this.toggleEmulationBtn.setOnCheckedChangeListener(onToggleEmulationBtnCheckedChanged);
@@ -50,8 +70,6 @@ public class MainActivity extends MapActivity {
         super.onResume();
 
         checkMockSettings();
-
-
     }
 
     @Override
@@ -66,94 +84,6 @@ public class MainActivity extends MapActivity {
 
             Toast.makeText(this, "Please enable mock locations", Toast.LENGTH_LONG).show();
 
-        }
-    }
-
-//    private class OnMoveOverlay extends Overlay {
-//        private GeoPoint location = new GeoPoint(0, 0);
-//        private GeoPoint currentLocation;
-//
-//        protected boolean isMapMoving = false;
-//
-//        public OnMoveOverlay() {
-//            super();
-//        }
-//
-//        @Override
-//        public boolean onTouchEvent(MotionEvent motionEvent, com.google.android.maps.MapView mapView) {
-//
-//            if (motionEvent.getActionMasked() == MotionEvent.ACTION_UP) {
-//                // Added to example to make more complete
-//                isMapMoving = true;
-//            }
-//
-//            return false;
-//        }
-//
-//        @Override
-//        public boolean draw(Canvas canvas, com.google.android.maps.MapView mapView, boolean shadow, long l) {
-//            if (!shadow) {
-//                if (isMapMoving) {
-//
-//
-//                    currentLocation = mapView.getMapCenter();
-//                    if (currentLocation.equals(location)) {
-//                        isMapMoving = false;
-//
-//                        locationBtn.setChecked(false);
-//
-//                        new GeocodeFromLocationTask(currentLocation).execute();
-//                    } else {
-//                        location = currentLocation;
-//                    }
-//                }
-//            }
-//
-//            return super.draw(canvas, mapView, shadow, l);
-//        }
-//    }
-
-    private class OnMoveOverlay extends Overlay
-    {
-
-        private  GeoPoint lastLatLng = new GeoPoint(0, 0);
-        private  GeoPoint currentLatLng;
-
-        protected boolean isMapMoving = false;
-
-        @Override
-        public boolean onTouchEvent(MotionEvent motionEvent, MapView mapView) {
-            super.onTouchEvent(motionEvent, mapView);
-
-            if (motionEvent.getAction() == MotionEvent.ACTION_UP)
-            {
-                // Added to example to make more complete
-                isMapMoving = true;
-            }
-
-            return false;
-        }
-
-
-        @Override
-        public void draw(Canvas canvas, MapView mapView, boolean shadow)
-        {
-            if (!shadow)
-            {
-                if (isMapMoving)
-                {
-                    currentLatLng = mapView.getProjection().fromPixels(0, 0);
-                    if (currentLatLng.equals(lastLatLng))
-                    {
-                        isMapMoving = false;
-                        eventListener.mapMovingFinishedEvent();
-                    }
-                    else
-                    {
-                        lastLatLng = currentLatLng;
-                    }
-                }
-            }
         }
     }
 
