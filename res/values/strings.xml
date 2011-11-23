@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Location emultor</string>
+    <string name="app_name">Location emulator</string>
+    <string name="mock_service_started">Mock service started</string>
+    <string name="mock_service_stopped">Mock service stopped</string>
+    <string name="mock_service_connected">Mock service connected</string>
+    <string name="mock_service_disconnected">Mock service disconnected</string>
+    <string name="mock_service_label">Location emulator</string>
 </resources>

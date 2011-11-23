@@ -1,24 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
-              android:layout_width="fill_parent"
-              android:layout_height="fill_parent"
+                android:orientation="vertical"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
         >
-    <com.google.android.maps.MapView
-            android:id="@+id/map_view"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:clickable="true"
-            android:apiKey="@string/google_maps_api_key"/>
+    <com.google.android.maps.MapView android:id="@+id/map_view"
+                                     android:layout_width="fill_parent"
+                                     android:layout_height="fill_parent"
+                                     android:clickable="true"
+                                     android:apiKey="@string/google_maps_api_key"/>
 
-    <ToggleButton
-            android:id="@+id/toggle_emulation_btn"
-            android:layout_width="fill_parent"
-            android:layout_height="50dp"
-            android:layout_margin="10dp"
-            android:textOn="Disable emulation"
-            android:textOff="Enable emulation"
+    <ImageView android:layout_width="wrap_content"
+               android:layout_height="wrap_content"
+               android:src="@drawable/location"
+               android:layout_centerInParent="true"/>
 
-            />
+    <LinearLayout android:orientation="horizontal"
+                  android:layout_height="wrap_content"
+                  android:layout_width="fill_parent"
+                  android:layout_alignParentTop="true">
+
+        <ToggleButton android:id="@+id/toggle_emulation_btn"
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:textOn="Off"
+                      android:textOff="On"/>
+
+        <EditText android:id="@+id/speed"
+                  android:layout_width="70dp"
+                  android:layout_height="wrap_content"
+                  android:layout_margin="7dp"
+                  android:hint="Km/H"
+                  android:numeric="decimal"/>
+
+        <EditText android:id="@+id/heading"
+                  android:layout_width="70dp"
+                  android:layout_height="wrap_content"
+                  android:layout_margin="7dp"
+                  android:hint="Degr"
+                  android:numeric="decimal"/>
+
+        <Button android:id="@+id/apply"
+                android:layout_height="wrap_content"
+                android:layout_width="fill_parent"
+                android:layout_margin="7dp"
+                android:onClick="apply"
+                android:text="Apply"/>
+
+    </LinearLayout>
 </RelativeLayout>
 
