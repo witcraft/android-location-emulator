@@ -25,11 +25,24 @@
             <scope>provided</scope>
         </dependency>
 
-        <!--<dependency>-->
-            <!--<groupId>com.google.http-client</groupId>-->
-            <!--<artifactId>google-http-client</artifactId>-->
-            <!--<version>1.6.0-beta</version>-->
-        <!--</dependency>-->
+        <dependency>
+            <groupId>org.roboguice</groupId>
+            <artifactId>roboguice</artifactId>
+            <version>2.0b3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>android.support</groupId>
+            <artifactId>compatibility-v4</artifactId>
+            <version>r4</version>
+        </dependency>
+
+
+        <dependency>
+            <groupId>com.google.http-client</groupId>
+            <artifactId>google-http-client</artifactId>
+            <version>1.6.0-beta</version>
+        </dependency>
 
         <!--<dependency>-->
             <!--<groupId>com.google.http-client</groupId>-->
@@ -61,7 +74,6 @@
 
     <build>
         <finalName>${project.artifactId}</finalName>
-        <sourceDirectory>src</sourceDirectory>
         <pluginManagement>
             <plugins>
                 <plugin>
@@ -80,8 +92,15 @@
                     <sdk>
                         <platform>8</platform>
                     </sdk>
+                    <dex>
+                        <jvmArguments>
+                            <jvmArgument>-Xms256m</jvmArgument>
+                            <jvmArgument>-Xmx512m</jvmArgument>
+                        </jvmArguments>
+                    </dex>
                 </configuration>
             </plugin>
+
         </plugins>
     </build>
 </project>
